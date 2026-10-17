@@ -25,15 +25,3 @@ export function resolveDeviceId(raw: string | undefined): { deviceId: string; mi
   if (existing) return { deviceId: existing, minted: false };
   return { deviceId: mintDeviceId(), minted: true };
 }
-
-export function blobPathname(deviceId: string, filename: string): string {
-  const id = parseDeviceId(deviceId);
-  if (!id) throw new Error("Invalid device id");
-  return `${id}/${sanitizeFilename(filename)}`;
-}
-
-function sanitizeFilename(filename: string): string {
-  const base = filename.replaceAll("\\", "/").split("/").pop() ?? "";
-  const cleaned = base.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^\.+/, "");
-  return cleaned.slice(0, 180) || "file";
-}

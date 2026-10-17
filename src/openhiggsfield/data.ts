@@ -162,7 +162,7 @@ export function roleNoun(role: MediaRole, count: number): string {
   return count === 1 ? ROLE_LABELS[role].toLowerCase() : ROLE_PLURALS[role];
 }
 
-/* Mirrors the allow-list in src/app/api/blob/route.ts. */
+/* Mirrors the server-side allow-list in src/storage/assets.ts. */
 export const ROLE_ACCEPT: Record<MediaRole, string> = {
   start: "image/jpeg,image/png,image/webp,image/gif",
   end: "image/jpeg,image/png,image/webp,image/gif",

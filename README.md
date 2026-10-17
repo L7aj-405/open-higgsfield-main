@@ -40,8 +40,8 @@ Next.js 16 App Router on Vercel · React 19 · plain CSS · Zustand · pnpm
   audio, batch size, prompt enhancement — each model declares its own allow-list
   and the studio renders exactly that. No parallel hardcoded list.
 - **Media inputs by role.** Start frame, end frame, references, video and audio,
-  each with the per-role cap the model declares. Files upload to Vercel Blob and
-  become public URLs the generate request can carry.
+  each with the per-role cap the model declares. Files upload to persistent
+  server storage and become public HTTPS URLs the generate request can carry.
 - **Asset picker.** Attach from your uploads library or from any finished run in
   history — two tabs over one library, filtered to the role's kind.
 - **Batch.** Up to 4 results per press. Models with a native count setting use it;
@@ -96,8 +96,10 @@ Each generate is one object: `{ model, prompt, media, settings }`.
   no studio changes.
 - **Five small Zustand stores** — shared image/video prompt, shared image/video
   media, `settings[modelId]`, and a tiny `active` store. No store per model.
-- **Uploads** go client-direct to Vercel Blob through `/api/blob`, which issues
-  scoped tokens. `blob:` URLs are preview-only.
+- **Uploads** use authenticated multipart `POST /api/assets`. The server validates
+  the MIME type and file signature, assigns an unguessable filename, and writes
+  into `ASSET_STORAGE_PATH`. Public `GET /assets/<filename>` responses are
+  immutable inputs suitable for the generation API.
 
 ---
 
@@ -114,8 +116,43 @@ Open the studio, press **Add key**, and paste your platform key as `id:secret`.
 
 ```bash
 HF_API_BASE_URL=                      # generation API origin, server only
-OPEN_HIGGSFIELD_READ_WRITE_TOKEN=     # Vercel Blob read-write token
+ASSET_STORAGE_PATH=/app/storage/assets
+ASSET_PUBLIC_BASE_URL=https://openhiggsfild.10xscale.agency/assets
+ASSET_MAX_UPLOAD_BYTES=52428800       # optional; defaults to 50 MiB
 ```
+
+`OPEN_HIGGSFIELD_READ_WRITE_TOKEN` is not used for normal uploads.
+
+### Coolify persistent asset storage
+
+Set these runtime environment variables on the Coolify service:
+
+```ini
+ASSET_STORAGE_PATH=/app/storage/assets
+ASSET_PUBLIC_BASE_URL=https://openhiggsfild.10xscale.agency/assets
+```
+
+Optionally set `ASSET_MAX_UPLOAD_BYTES` to a positive byte count. Its default is
+`52428800` (50 MiB).
+
+Add a Coolify persistent volume with this container mount path:
+
+```text
+/app/storage/assets
+```
+
+The volume—not the container's writable layer—must own this path and must remain
+attached across redeploys and container recreation. The user running the Node.js
+process needs read, write, and directory traversal permission on it. After
+redeploying, upload one small image and confirm its returned `/assets/...` URL is
+publicly reachable over HTTPS; then redeploy once more and confirm the same URL
+still works.
+
+The asset GET route is intentionally public because Higgsfield downloads media
+inputs without an application session. Upload POSTs are not public: browser
+uploads require the existing httpOnly platform-key cookie and a same-origin
+request, while automation uploads require `Authorization: Bearer
+<AUTOMATION_API_TOKEN>`.
 
 ### Commands
 
@@ -133,7 +170,7 @@ OPEN_HIGGSFIELD_READ_WRITE_TOKEN=     # Vercel Blob read-write token
 ```
 src/
   app/          /  is the full-viewport studio and the only page
-                /api/blob issues upload tokens
+                /api/assets accepts protected uploads; /assets serves media
                 base.css owns the document canvas
   generation/   generate requests, server actions, API mapping, catalog, stores
   openhiggsfield/

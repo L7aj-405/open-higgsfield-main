@@ -1,22 +1,20 @@
-import { put } from "@vercel/blob/client";
-
 export async function uploadMedia(file: File): Promise<{ url: string }> {
-  const res = await fetch("/api/blob", {
+  const form = new FormData();
+  form.set("file", file);
+  const response = await fetch("/api/assets", {
     method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      type: "blob.generate-client-token",
-      payload: { pathname: file.name, clientPayload: null, multipart: false },
-    }),
+    body: form,
   });
-  if (!res.ok) throw new Error("Failed to retrieve the client token");
-  const { clientToken, pathname } = (await res.json()) as {
-    clientToken?: unknown;
-    pathname?: unknown;
-  };
-  if (typeof clientToken !== "string" || typeof pathname !== "string") {
-    throw new Error("Failed to retrieve the client token");
+  const payload = (await response.json().catch(() => null)) as {
+    error?: unknown;
+    url?: unknown;
+  } | null;
+  if (!response.ok) {
+    const message = typeof payload?.error === "string" ? payload.error : "Asset upload failed.";
+    throw new Error(message);
   }
-  const blob = await put(pathname, file, { access: "public", token: clientToken });
-  return { url: blob.url };
+  if (typeof payload?.url !== "string" || !payload.url.startsWith("https://")) {
+    throw new Error("Upload completed without a valid HTTPS asset URL.");
+  }
+  return { url: payload.url };
 }

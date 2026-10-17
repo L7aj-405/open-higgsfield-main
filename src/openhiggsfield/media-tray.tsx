@@ -22,7 +22,7 @@ export interface MediaTray {
   /** The current surface's attachments, so the picker can derive its own caps
       from the same list the strip below renders. */
   items: MediaItem[];
-  /** Every file this browser has sent to Blob, newest first. */
+  /** Every file this browser has sent to persistent asset storage, newest first. */
   uploads: UploadRecord[];
   /** The URL of the last file uploaded from the picker. It goes onto the shelf
       and into the panel's selection, not onto the plane — the panel stages the
@@ -101,7 +101,7 @@ export function useMediaTray(
     } catch (caught) {
       onError(
         caught instanceof Error
-          ? `Upload failed — ${caught.message}. Check the Blob store is configured, then retry.`
+          ? `Upload failed — ${caught.message}`
           : "Upload failed. Retry, or drop the file and generate from the prompt alone.",
       );
     } finally {
@@ -167,8 +167,8 @@ export function MediaStrip({ model }: { model: ModelEntry }) {
                 {item.role === "audio" ? <AudioIcon size={20} /> : <VideoIcon size={20} />}
               </span>
             ) : (
-              /* Blob-hosted user upload; next/image would proxy an arbitrary
-                 remote host for a 56px thumb. */
+              /* User uploads and provider results can have different hosts;
+                 next/image would proxy them for a 56px thumb. */
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 className="ohf-strip-thumb"

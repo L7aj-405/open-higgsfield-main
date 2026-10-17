@@ -2609,7 +2609,7 @@
 
 /* ---------- asset picker ---------- */
 
-/* Inputs come from two shelves — files this browser sent to Blob, and the runs
+/* Inputs come from two shelves — files this browser uploaded, and the runs
    already finished — so the panel is a contact sheet with a tab per shelf,
    opened over the + it belongs to rather than as a modal over the work. */
 .ohf-popover--assets {

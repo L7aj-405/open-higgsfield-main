@@ -1,7 +1,7 @@
 import { browserLegacy, defaultKv, type Kv, type LegacyStore } from "./idb";
 import type { AssetKind } from "./data";
 
-/** A file the visitor sent to Blob. The URL is public and permanent, so the
+/** A file the visitor sent to persistent storage. The URL is public and durable, so the
     library outlives the session that produced it — the same reason run history
     is kept, and the reason the asset picker can offer both. */
 export interface UploadRecord {
